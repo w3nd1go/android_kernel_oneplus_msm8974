@@ -466,72 +466,69 @@ reschedule:
 	reschedule_hotplug_work();
 }
 
-/*
- * static void msm_hotplug_suspend(void)
- *
- *{
- *	int cpu;
- *
- *	mutex_lock(&hotplug.msm_hotplug_mutex);
- *	hotplug.suspended = 1;
- *	hotplug.min_cpus_online_res = hotplug.min_cpus_online;
- *	hotplug.min_cpus_online = 1;
- *	hotplug.max_cpus_online_res = hotplug.max_cpus_online;
- *	hotplug.max_cpus_online = hotplug.max_cpus_online_susp;
- *	mutex_unlock(&hotplug.msm_hotplug_mutex);
- *
- */
+void msm_hotplug_suspend(void)
+
+{
+	int cpu;
+
+	mutex_lock(&hotplug.msm_hotplug_mutex);
+	hotplug.suspended = 1;
+	hotplug.min_cpus_online_res = hotplug.min_cpus_online;
+	hotplug.min_cpus_online = 1;
+	hotplug.max_cpus_online_res = hotplug.max_cpus_online;
+	hotplug.max_cpus_online = hotplug.max_cpus_online_susp;
+	mutex_unlock(&hotplug.msm_hotplug_mutex);
+
 	/* Do not cancel hotplug work unless max_cpus_online_susp is 1 */
-/*	if (hotplug.max_cpus_online_susp > 1)
- *		return;
- */
+	if (hotplug.max_cpus_online_susp > 1)
+		return;
+
 	/* Flush hotplug workqueue */ 
-/*	flush_workqueue(hotplug_wq);
- *	cancel_delayed_work_sync(&hotplug_work);
- */
+	flush_workqueue(hotplug_wq);
+	cancel_delayed_work_sync(&hotplug_work);
+
 	/* Put all sibling cores to sleep */ 
-/*	for_each_online_cpu(cpu) {
- *		if (cpu == 0)
- *			continue;
- *		cpu_down(cpu);
- *	}
- *}
- *
- *static void __ref msm_hotplug_resume(void)
- *{
- *	int cpu, required_reschedule = 0, required_wakeup = 0;
- *
- *	if (hotplug.suspended) {
- *		mutex_lock(&hotplug.msm_hotplug_mutex);
- *		hotplug.suspended = 0;
- *		hotplug.min_cpus_online = hotplug.min_cpus_online_res;
- *		hotplug.max_cpus_online = hotplug.max_cpus_online_res;
- *		mutex_unlock(&hotplug.msm_hotplug_mutex);
- *		required_wakeup = 1;
- */
+	for_each_online_cpu(cpu) {
+		if (cpu == 0)
+			continue;
+		cpu_down(cpu);
+	}
+}
+
+void __ref msm_hotplug_resume(void)
+{
+	int cpu, required_reschedule = 0, required_wakeup = 0;
+
+	if (hotplug.suspended) {
+		mutex_lock(&hotplug.msm_hotplug_mutex);
+		hotplug.suspended = 0;
+		hotplug.min_cpus_online = hotplug.min_cpus_online_res;
+		hotplug.max_cpus_online = hotplug.max_cpus_online_res;
+		mutex_unlock(&hotplug.msm_hotplug_mutex);
+		required_wakeup = 1;
+
 		/* Initiate hotplug work if it was cancelled */
-/*		if (hotplug.max_cpus_online_susp <= 1) {
- *			required_reschedule = 1;
- *			INIT_DELAYED_WORK(&hotplug_work, msm_hotplug_work);
- *		}
- *	}
- *
- *	if (wakeup_boost || required_wakeup) {
- */
+		if (hotplug.max_cpus_online_susp <= 1) {
+			required_reschedule = 1;
+			INIT_DELAYED_WORK(&hotplug_work, msm_hotplug_work);
+		}
+	}
+
+	if (wakeup_boost || required_wakeup) {
+
 		/* Fire up all CPUs */
-/*		for_each_cpu_not(cpu, cpu_online_mask) {
- *			if (cpu == 0)
- *				continue;
- *			cpu_up(cpu);
- *			apply_down_lock(cpu);
- *		}
- *	}
- */
+		for_each_cpu_not(cpu, cpu_online_mask) {
+			if (cpu == 0)
+				continue;
+			cpu_up(cpu);
+			apply_down_lock(cpu);
+		}
+	}
+
 	/* Resume hotplug workqueue if required */
-/*	if (required_reschedule)
- *		reschedule_hotplug_work();
- *}
- */
+	if (required_reschedule)
+		reschedule_hotplug_work();
+}
 
 #ifdef CONFIG_STATE_NOTIFIER
 static int state_notifier_callback(struct notifier_block *this,

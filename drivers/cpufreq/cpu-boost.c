@@ -482,16 +482,15 @@ static struct notifier_block __refdata cpu_nblk = {
         .notifier_call = cpuboost_cpu_callback,
 };
 
-/* static void __wakeup_boost(void)
- * {
- *	if (!wakeup_boost || !input_boost_enabled ||
- *	     work_pending(&input_boost_work))
- *		return;
- *	pr_debug("Wakeup boost for display on event.\n");
- *	queue_work(cpu_boost_wq, &input_boost_work);
- *	last_input_time = ktime_to_us(ktime_get());
- * }
- */
+void __wakeup_boost(void)
+{
+	if (!wakeup_boost || !input_boost_enabled ||
+	     work_pending(&input_boost_work))
+		return;
+	pr_debug("Wakeup boost for display on event.\n");
+	queue_work(cpu_boost_wq, &input_boost_work);
+	last_input_time = ktime_to_us(ktime_get());
+}
 
 #ifdef CONFIG_STATE_NOTIFIER
 static int state_notifier_callback(struct notifier_block *this,
